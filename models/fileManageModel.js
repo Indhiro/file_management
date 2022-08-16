@@ -6,9 +6,8 @@ class fileManageModel {
         // let data = await con.query(query);
         con.query(query, function (err, result, fields) {
             if (err) throw err;
-            console.log(result);
+            res.send(result);
           });
-        // console.log(data);
     }
 
     static getOneData(req, res, next) {
@@ -17,15 +16,14 @@ class fileManageModel {
         // let data = await con.query(query);
         con.query(query, function (err, result, fields) {
             if (err) throw err;
-            console.log(result);
+            res.send(result);
           });
     }
 
     static uploadData(req, res, next) {
-        let fileNumber = 'file-number' 
         let formData = {
             owner: req.body.owner,
-            'file-number': req.body.fileNumber,
+            file_number: req.body.file_number,
             date: req.body.date,
             path: req.body.path,
             telephone: req.body.telephone,
@@ -34,9 +32,8 @@ class fileManageModel {
         let query = `INSERT INTO ${'`file-management`'}.files SET ?`;
         con.query(query, formData, function(err, result) {
             if (err) throw err;
-            console.log(result);
+            res.send(result);
         })
-        console.log(req.body);  
     }
 
     static updateData(req, res, next) {
@@ -51,7 +48,7 @@ class fileManageModel {
         //QUERY SET
         if(owner) query += ` owner = '${owner}',`;
         if(file_number) query += ` file_number = '${file_number}',`;
-        if(date) query += ` date = ${date},`;
+        if(date) query += ` date = '${date}',`;
         if(path) query += ` path = '${path}',`;
         if(telephone) query += ` telephone = ${telephone},`;
         if(notes) query += ` notes = '${notes}',`;
@@ -59,10 +56,9 @@ class fileManageModel {
         //QUERY WHERE
         query = query.slice(0, -1);
         query += ` WHERE id = ${id}`;
-        console.log(query);
         //Execute query
         con.query(query, function(err, result,fields) {
-            if (err) res.send(`No data updated!`);
+            if (err) throw err;
             res.send(result);
         })
     }
@@ -73,7 +69,7 @@ class fileManageModel {
         // let data = await con.query(query);
         con.query(query, function (err, result, fields) {
             if (err) throw err;
-            console.log(result);
+            res.send(result);
           });
         
     }
