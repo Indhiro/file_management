@@ -4,8 +4,9 @@ const bcrypt = require('bcrypt');
 class userModel {
     static async registerUser(req, res, next) {
         try {
-            let { full_name, email, telephone, address, institution_name, join_date, security_code } = req.body;
+            let { full_name, email, telephone, address, institution_name, join_date } = req.body;
             let password = await bcrypt.hash(req.body.password, 10)
+            let security_code = await bcrypt.hash(req.body.security_code, 10)
             //QUERY1
             let query = `SELECT * FROM ${'`file-management`'}.user`;
             con.query(query, function (err, result, fields) {
@@ -39,7 +40,6 @@ class userModel {
     static loginUser(req, res, next) {
         try {
             let { email, password } = req.body;
-            let simp;
             //VALIDASI
             if (!email) return res.send('Email empty, please try again!');
             if (!password) return res.send('Password empty, please try again!');
@@ -62,25 +62,37 @@ class userModel {
         }
     };
 
-    static updatePassUser(req, res, next) {
-        let { email, password, newPass } = req.body;
+    static async updatePassUser(req, res, next) {
+        let { email, password, security_code } = req.body;
+        let newPass = await bcrypt.hash(req.body.newPass, 10)
         //VALIDASI
         if (!email) return res.send('Email empty, please try again!');
         if (!password) return res.send('Password empty, please try again!');
-        if (!newPass) return res.send('New Password empty, please try again!');
+        if (!newPass) return res.send('New password empty, please try again!');
+        if (!security_code) return res.send('Security code  empty, please try again!');
         //QUERY
-        let query = `UPDATE ${'`file-management`'}.user
-                    SET password = '${newPass}'
-                    WHERE email = '${email}'
-                    AND password = '${password}'`;
-        //EXECUTION QUERY
-        con.query(query, function (err, result, fields) {
-            if (err) throw err;
-            //result.message[15] => if 0 account not found, if 1 account found
-            if (result.message[15] == 0) return res.send('Account not found!')
-            if (result.changedRows === 0) return res.send('Password same, please try again!')
-            if (result.changedRows === 1) return res.send('Password Changed!')
-            res.send(result)
+        let query2 = `SELECT password, security_code
+                    FROM ${'`file-management`'}.user
+                    WHERE email = '${email}'`
+        con.query(query2, function (err2, result2, fields2) {
+            if (bcrypt.compareSync(password, result2[0].password)) {
+                if (bcrypt.compareSync(security_code, result2[0].security_code)) {
+                    let query = `UPDATE ${'`file-management`'}.user
+                                SET password = '${newPass}'
+                                WHERE email = '${email}'
+                                AND password = '${result2[0].password}'`;
+                    //EXECUTION QUERY
+                    con.query(query, function (err, result, fields) {
+                        if (err) throw err;
+                        //result.message[15] => if 0 account not found, if 1 account found
+                        if (result.message[15] == 0) return res.send('Account not found!')
+                        if (result.changedRows === 1) return res.send('Password Changed!')
+                        res.send(result)
+                    })
+                } 
+            } else {
+                res.send('Password wrong!')
+            }
         })
     };
 }
